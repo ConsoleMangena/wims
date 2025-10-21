@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import PageMeta from '../../components/common/PageMeta'
 import { apiEndpoints } from '../../lib/api'
 
-type License = { licence_id: number; hunter_id: number; issue_date: string; expiry_date: string }
+type License = { licence_id: number; hunter_id: number; issue_date: string; expiry_date: string; code: string }
 
 export default function LicensesPage() {
   const [items, setItems] = useState<License[]>([])
@@ -43,8 +43,9 @@ export default function LicensesPage() {
       setForm({ hunter_id: '', issue_date: '', expiry_date: '' })
       setEditingId(null)
       await load()
-    } catch (e) {
-      setError('Save failed')
+    } catch (e: any) {
+      if (e?.response?.status === 403) setError('Admin only: set auth token to admin');
+      else setError('Save failed');
     }
   }
 
@@ -100,6 +101,7 @@ export default function LicensesPage() {
             <thead>
               <tr className="text-left text-sm text-gray-600">
                 <th className="p-3">ID</th>
+                <th className="p-3">Code</th>
                 <th className="p-3">Hunter ID</th>
                 <th className="p-3">Issue Date</th>
                 <th className="p-3">Expiry Date</th>
@@ -110,6 +112,7 @@ export default function LicensesPage() {
               {items.map((l) => (
                 <tr key={l.licence_id} className="border-t">
                   <td className="p-3">{l.licence_id}</td>
+                  <td className="p-3 font-mono">{l.code}</td>
                   <td className="p-3">{l.hunter_id}</td>
                   <td className="p-3">{l.issue_date?.slice(0,10)}</td>
                   <td className="p-3">{l.expiry_date?.slice(0,10)}</td>

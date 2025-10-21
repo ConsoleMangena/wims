@@ -1,22 +1,35 @@
 import { useEffect, useState } from 'react'
 import { apiEndpoints } from '../../lib/api'
 import PageMeta from '../../components/common/PageMeta'
+import MapOverview from '../../components/map/MapOverview'
 
 export default function HunterDashboard() {
   const [licenses, setLicenses] = useState<any[]>([])
   const [quotas, setQuotas] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
+  const [reserves, setReserves] = useState<any[]>([])
+  const [sightings, setSightings] = useState<any[]>([])
+  const [incidents, setIncidents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [licensesRes, quotasRes] = await Promise.all([
+        const [licensesRes, quotasRes, statsRes, reservesRes, sightingsRes, incidentsRes] = await Promise.all([
           apiEndpoints.licenses.list(),
           apiEndpoints.quotas.list(),
+          apiEndpoints.stats.getDashboard(),
+          apiEndpoints.reserves.list(),
+          apiEndpoints.sightings.list(),
+          apiEndpoints.poaching.list(),
         ])
         setLicenses(licensesRes.data.slice(0, 5))
         setQuotas(quotasRes.data.slice(0, 5))
+        setStats(statsRes.data)
+        setReserves(reservesRes.data || [])
+        setSightings(sightingsRes.data.slice(0, 50) || [])
+        setIncidents(incidentsRes.data.slice(0, 50) || [])
       } catch (err) {
         setError('Failed to fetch data')
         console.error(err)
@@ -44,6 +57,24 @@ export default function HunterDashboard() {
         <p className="text-gray-600">Manage your hunting licenses and compliance</p>
 
         {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
+
+        {stats && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <OverviewCard title="Licenses" value={stats.licences} />
+            <OverviewCard title="Quotas" value={stats.quotas} />
+            <OverviewCard title="Reserves" value={stats.reserves} />
+          </div>
+        )}
+
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-bold text-gray-800 mb-3">Hunting Areas Overview</h2>
+          <MapOverview sightings={sightings} incidents={incidents} reserves={reserves} height={320} />
+          <div className="flex gap-4 text-xs mt-2 text-gray-600">
+            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-full bg-blue-600" /> Sightings</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-full bg-red-600" /> Incidents</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block bg-green-600" style={{ width: 12, height: 2 }} /> Reserves</span>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
@@ -103,5 +134,14 @@ export default function HunterDashboard() {
         </div>
       </div>
     </>
+  )
+}
+
+function OverviewCard({ title, value }: { title: string; value: number }) {
+  return (
+    <div className="bg-white p-4 rounded-lg shadow">
+      <p className="text-sm text-gray-600">{title}</p>
+      <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
+    </div>
   )
 }

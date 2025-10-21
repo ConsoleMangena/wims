@@ -13,6 +13,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  const role = localStorage.getItem('userRole')
+  if (role) {
+    (config.headers as any)['X-Role'] = role
+  }
   return config
 }, (error) => {
   return Promise.reject(error)

@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react'
 import { apiEndpoints } from '../../lib/api'
 import PageMeta from '../../components/common/PageMeta'
+import MapOverview from '../../components/map/MapOverview'
 
 export default function AntiPoachingDashboard() {
   const [incidents, setIncidents] = useState<any[]>([])
   const [reserves, setReserves] = useState<any[]>([])
+  const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [incidentsRes, reservesRes] = await Promise.all([
+        const [incidentsRes, reservesRes, statsRes] = await Promise.all([
           apiEndpoints.poaching.list(),
           apiEndpoints.reserves.list(),
+          apiEndpoints.stats.getDashboard(),
         ])
         setIncidents(incidentsRes.data.slice(0, 10))
         setReserves(reservesRes.data.slice(0, 5))
+        setStats(statsRes.data)
       } catch (err) {
         setError('Failed to fetch data')
         console.error(err)
@@ -44,6 +48,23 @@ export default function AntiPoachingDashboard() {
         <p className="text-gray-600">Monitor and manage poaching incidents across reserves</p>
 
         {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">{error}</div>}
+
+        {stats && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <OverviewCard title="Incidents" value={stats.poaching} />
+            <OverviewCard title="Reserves" value={stats.reserves} />
+            <OverviewCard title="Species" value={stats.species} />
+          </div>
+        )}
+
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h2 className="text-xl font-bold text-gray-800 mb-3">Operations Map</h2>
+          <MapOverview sightings={[]} incidents={incidents} reserves={reserves} height={320} />
+          <div className="flex gap-4 text-xs mt-2 text-gray-600">
+            <span className="inline-flex items-center gap-1"><span className="inline-block w-3 h-3 rounded-full bg-red-600" /> Incidents</span>
+            <span className="inline-flex items-center gap-1"><span className="inline-block bg-green-600" style={{ width: 12, height: 2 }} /> Reserves</span>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
@@ -105,5 +126,14 @@ export default function AntiPoachingDashboard() {
         </div>
       </div>
     </>
+  )
+}
+
+function OverviewCard({ title, value }: { title: string; value: number }) {
+  return (
+    <div className="bg-white p-4 rounded-lg shadow">
+      <p className="text-sm text-gray-600">{title}</p>
+      <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
+    </div>
   )
 }

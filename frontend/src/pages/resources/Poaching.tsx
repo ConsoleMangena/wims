@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageMeta from '../../components/common/PageMeta'
 import { apiEndpoints } from '../../lib/api'
+import MapPointPicker from '../../components/map/MapPointPicker'
 
 type Incident = { incident_id: number; incident_date: string; location: any; reserve_id: number | null; description: string | null }
 
@@ -94,9 +95,17 @@ export default function PoachingPage() {
           <label className="block text-sm text-gray-600">Reserve ID</label>
           <input value={form.reserve_id} onChange={(e) => setForm({ ...form, reserve_id: e.target.value })} type="number" className="border rounded px-3 py-2 w-full" />
         </div>
-        <div className="sm:col-span-5">
-          <label className="block text-sm text-gray-600">Description</label>
-          <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="border rounded px-3 py-2 w-full" />
+        <div className="sm:col-span-5 space-y-2">
+          <label className="block text-sm text-gray-600">Pick location on map</label>
+          <MapPointPicker
+            lat={form.lat ? Number(form.lat) : undefined}
+            lon={form.lon ? Number(form.lon) : undefined}
+            onChange={(lat, lon) => setForm((f) => ({ ...f, lat: String(lat), lon: String(lon) }))}
+          />
+          <div>
+            <label className="block text-sm text-gray-600">Description</label>
+            <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="border rounded px-3 py-2 w-full" />
+          </div>
         </div>
         <div>
           <button type="submit" className="bg-brand-500 text-white px-4 py-2 rounded">{editingId ? 'Update' : 'Create'}</button>
